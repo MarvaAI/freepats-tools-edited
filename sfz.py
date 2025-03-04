@@ -1,6 +1,6 @@
-#!/usr/bin/python3
 #
 # Copyright 2016, roberto@zenvoid.org
+# Modified by Aaron Mathew, 2025
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,11 +12,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 
-import logging, re, os.path, sys
+import logging, re, os.path
 import dateutil.parser
 
 
 class SFZParseError(Exception):
+	pass
+
+class SFZImportError(Exception):
 	pass
 
 
@@ -37,7 +40,8 @@ class SFZ:
 			inFile = open(fileName, 'r')
 		except:
 			logging.error("Can not open file: {}".format(fileName))
-			return False
+			raise SFZImportError(f"Failed to import SFZ file: {fileName}")
+		
 		path = os.path.dirname(fileName)
 		if len(path) > 0:
 			self.soundBank['Path'] = path
@@ -50,7 +54,7 @@ class SFZ:
 			except SFZParseError:
 				logging.error("Error on line {} of file {}".format(lineNumber, fileName))
 				inFile.close()
-				return False
+				raise SFZImportError(f"Failed to import SFZ file: {fileName}")
 
 		self.commitRegion()
 		self.commitGroup()
@@ -59,11 +63,10 @@ class SFZ:
 		return True
 
 
-	def exportSFZ(self, fileName = None):
-		if fileName:
-			outFile = open(fileName, 'w')
-		else:
-			outFile = sys.stdout
+	def exportSFZ(self, fileName):
+	
+		outFile = open(fileName, 'w')
+
 		for hint in ('Name', 'Date', 'URL'):
 			if hint in self.soundBank.keys():
 				outFile.write('//+ {}: {}\n'.format(hint, self.soundBank[hint]))
@@ -111,12 +114,13 @@ class SFZ:
 						or regionKey == 'pitch_keycenter':
 							continue
 						outFile.write(' {}={}\n'.format(regionKey, region[regionKey]))
+
 		outFile.close()
 		return True
 
 
 	def processLine(self, line):
-		match = re.search('//\+ ([a-zA-Z0-9_&.+-]+): +(\S.*)$', line)
+		match = re.search(r'//\+ ([a-zA-Z0-9_&.+-]+): +(\S.*)$', line)
 		if match:
 			value = match.group(2)
 			value = value.rstrip()
@@ -159,7 +163,7 @@ class SFZ:
 				return self.processOpcode(opcode, line)
 
 			if line[match.start()] == '=':
-				nextOpcode = re.search('\s[a-zA-Z0-9_]+=', line)
+				nextOpcode = re.search(r'\s[a-zA-Z0-9_]+=', line)
 				if not nextOpcode:
 					raise SFZParseError
 				value = line[:nextOpcode.start()].rstrip()
@@ -397,4 +401,3 @@ class SFZ:
 		if noteNum > 127:
 			raise SFZParseError
 		return noteNum
-

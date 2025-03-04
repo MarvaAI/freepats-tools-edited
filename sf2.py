@@ -1,6 +1,6 @@
-#!/usr/bin/python3
 #
 # Copyright 2016, roberto@zenvoid.org
+# Modified by Aaron Mathew, 2025
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # to convert from XML descriptions to SoundFont files:
 # https://github.com/freepats/tools
 
-import struct, logging, os, math, sys
+import struct, logging, os, math
 import dateutil.parser
 import soundfile
 
@@ -69,9 +69,9 @@ class SF2:
 		self.nextProgram = 0
 		try:
 			self.outFile = open(fileName, 'wb')
-		except:
+		except Exception as e:
 			logging.error("Can not create file {}".format(fileName))
-			return False
+			raise SF2ExportError(f"Failed to open output file: {fileName}") from e
 
 		try:
 			sf2 = [[[b'RIFF', b'sfbk'], [
@@ -81,16 +81,18 @@ class SF2:
 			]]]
 
 			self.exportChunks(sf2)
+
 		except SF2ExportError:
 			self.outFile.close()
 			os.unlink(fileName)
 			logging.error("Failed to export SF2 to file {}".format(fileName))
-			return False
-		except:
+			raise
+		
+		except Exception as e:
 			self.outFile.close()
 			os.unlink(fileName)
 			logging.error("Failed to export SF2 to file {}".format(fileName))
-			raise
+			raise SF2ExportError(f"Unexpected error during SF2 export: {e}") from e
 
 		self.outFile.close()
 		self.outFile = None
