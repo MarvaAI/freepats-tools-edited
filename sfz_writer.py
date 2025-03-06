@@ -16,7 +16,7 @@ import sys, logging
 logging.basicConfig(level=logging.INFO, stream=sys.stderr, format='%(levelname)s: %(message)s')
 
 import re, os.path, time
-from sfz import SFZ
+from .sfz import SFZ
 
 
 class SfzWriter():

@@ -16,8 +16,8 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 import re
-from sfz import SFZ
-from sf2 import SF2
+from .sfz import SFZ
+from .sf2 import SF2
 
 class Sf2Writer:
 	expected_input_format = 'sfz'
